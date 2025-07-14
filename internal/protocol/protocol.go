@@ -33,6 +33,9 @@ func HandleCommand(command string, store *store.GedisStore) string {
 		}
 		store.Delete(parts[1])
 		return "OK"
+	case "KEYS":
+		keys := store.Keys() // Assuming a Keys method exists in GedisStore
+		return strings.Join(keys, ";")
 	default:
 		return "ERROR: Unknown command"
 	}
