@@ -2,6 +2,7 @@ package main
 
 import (
 	"bufio"
+	"flag"
 	"fmt"
 	"net"
 	"strings"
@@ -10,7 +11,7 @@ import (
 	"github.com/crva/gedis/internal/store"
 )
 
-func handleConnection(conn net.Conn, store *store.GedisStore) {
+func handleConnection(conn net.Conn, store *store.GedisStore, aof *protocol.AOF) {
 	defer conn.Close()
 	reader := bufio.NewReader(conn) // Create a buffered reader to read from the connection
 
@@ -21,12 +22,12 @@ func handleConnection(conn net.Conn, store *store.GedisStore) {
 		}
 
 		line = strings.TrimSpace(line)
-		response := protocol.HandleCommand(line, store) // Process the command using the protocol package
+		response := protocol.HandleCommand(line, store, aof) // Process the command using the protocol package
 		conn.Write([]byte(response + "\n"))
 	}
 }
 
-func startServer(address string, store *store.GedisStore) {
+func startServer(address string, store *store.GedisStore, aof *protocol.AOF) {
 	listener, err := net.Listen("tcp", address)
 	if err != nil {
 		panic(err) // Unable to start the TCP server
@@ -42,12 +43,31 @@ func startServer(address string, store *store.GedisStore) {
 			continue
 		}
 
-		go handleConnection(conn, store)
+		go handleConnection(conn, store, aof)
 	}
 }
 
 func main() {
+	replayAOF := flag.Bool("replay", false, "Replay AOF file on startup")
+	flag.Parse()
+
+	aof, err := protocol.NewAOF("gedis.aof")
+	if err != nil {
+		fmt.Println("Error creating AOF file:", err)
+		return
+	}
+	defer aof.Close()
+
 	store := store.NewStore()
+
+	if *replayAOF {
+		err := protocol.ReplayAOF("gedis.aof", store)
+		if err != nil {
+			fmt.Println("Error replaying AOF file:", err)
+			return
+		}
+	}
+
 	address := "localhost:8080"
-	startServer(address, store)
+	startServer(address, store, aof)
 }

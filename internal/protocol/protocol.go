@@ -6,7 +6,7 @@ import (
 	"github.com/crva/gedis/internal/store"
 )
 
-func HandleCommand(command string, store *store.GedisStore) string {
+func HandleCommand(command string, store *store.GedisStore, aof *AOF) string {
 	parts := strings.Split(command, ":")
 
 	switch parts[0] {
@@ -17,6 +17,11 @@ func HandleCommand(command string, store *store.GedisStore) string {
 			return "ERROR: SET command requires a key and a value"
 		}
 		store.Set(parts[1], parts[2])
+
+		if aof != nil {
+			aof.AppendGedisCommand(command)
+		}
+
 		return "OK"
 	case "GET":
 		if len(parts) != 2 {
@@ -32,6 +37,11 @@ func HandleCommand(command string, store *store.GedisStore) string {
 			return "ERROR: DEL command requires a key"
 		}
 		store.Delete(parts[1])
+
+		if aof != nil {
+			aof.AppendGedisCommand(command)
+		}
+
 		return "OK"
 	case "KEYS":
 		keys := store.Keys() // Assuming a Keys method exists in GedisStore
