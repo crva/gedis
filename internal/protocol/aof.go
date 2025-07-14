@@ -51,7 +51,6 @@ func ReplayAOF(filename string, store *store.GedisStore) error {
 	scanner := bufio.NewScanner(file)
 	for scanner.Scan() {
 		line := scanner.Text()
-		println(line)
 		HandleCommand(line, store, nil)
 	}
 	return scanner.Err()
