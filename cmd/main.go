@@ -49,6 +49,8 @@ func startServer(address string, store *store.GedisStore, aof *protocol.AOF) {
 
 func main() {
 	replayAOF := flag.Bool("replay", false, "Replay AOF file on startup")
+	host := flag.String("host", "localhost", "Host to bind the server")
+	port := flag.Int("port", 8080, "Port to bind the server")
 	flag.Parse()
 
 	aof, err := protocol.NewAOF("gedis.aof")
@@ -68,6 +70,6 @@ func main() {
 		}
 	}
 
-	address := "localhost:8080"
+	address := fmt.Sprintf("%s:%d", *host, *port)
 	startServer(address, store, aof)
 }
