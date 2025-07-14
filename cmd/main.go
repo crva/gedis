@@ -34,12 +34,12 @@ func startServer(address string, store *store.GedisStore, aof *protocol.AOF) {
 	}
 	defer listener.Close()
 
-	fmt.Println("Server started on", address)
+	fmt.Println("[Server] Started on", address)
 
 	for {
 		conn, err := listener.Accept() // Program is blocking here, waiting for a new connection
 		if err != nil {
-			fmt.Println("Error accepting connection:", err)
+			fmt.Println("[Server] Error accepting connection:", err)
 			continue
 		}
 
@@ -55,7 +55,7 @@ func main() {
 
 	aof, err := protocol.NewAOF("gedis.aof")
 	if err != nil {
-		fmt.Println("Error creating AOF file:", err)
+		fmt.Println("[AOF] Error creating AOF file:", err)
 		return
 	}
 	defer aof.Close()
@@ -63,11 +63,13 @@ func main() {
 	store := store.NewStore()
 
 	if *replayAOF {
+		fmt.Println("[AOF] Replaying file...")
 		err := protocol.ReplayAOF("gedis.aof", store)
 		if err != nil {
-			fmt.Println("Error replaying AOF file:", err)
+			fmt.Println("[AOF] Error replaying AOF file:", err)
 			return
 		}
+		fmt.Println("[AOF] File replayed successfully")
 	}
 
 	address := fmt.Sprintf("%s:%d", *host, *port)
