@@ -1,7 +1,18 @@
 package protocol
 
-func HandleCommand(command string) string {
-	// This function processes the command and returns a response.
-	// For now, it simply returns the command as a response.
-	return "Command received: " + command
+import (
+	"strings"
+
+	"github.com/crva/gedis/internal/store"
+)
+
+func HandleCommand(command string, store *store.GedisStore) string {
+	parts := strings.Split(command, ":")
+
+	switch parts[0] {
+	case "PING":
+		return "PONG"
+	default:
+		return "ERROR: Unknown command"
+	}
 }

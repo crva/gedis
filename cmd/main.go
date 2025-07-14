@@ -7,9 +7,10 @@ import (
 	"strings"
 
 	"github.com/crva/gedis/internal/protocol"
+	"github.com/crva/gedis/internal/store"
 )
 
-func handleConnection(conn net.Conn) {
+func handleConnection(conn net.Conn, store *store.GedisStore) {
 	defer conn.Close()
 	reader := bufio.NewReader(conn) // Create a buffered reader to read from the connection
 
@@ -20,12 +21,12 @@ func handleConnection(conn net.Conn) {
 		}
 
 		line = strings.TrimSpace(line)
-		response := protocol.HandleCommand(line) // Process the command using the protocol package
+		response := protocol.HandleCommand(line, store) // Process the command using the protocol package
 		conn.Write([]byte(response + "\n"))
 	}
 }
 
-func startServer(address string) {
+func startServer(address string, store *store.GedisStore) {
 	listener, err := net.Listen("tcp", address)
 	if err != nil {
 		panic(err) // Unable to start the TCP server
@@ -41,11 +42,12 @@ func startServer(address string) {
 			continue
 		}
 
-		go handleConnection(conn)
+		go handleConnection(conn, store)
 	}
 }
 
 func main() {
+	store := store.NewStore()
 	address := "localhost:8080"
-	startServer(address)
+	startServer(address, store)
 }
